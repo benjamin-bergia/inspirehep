@@ -1,27 +1,50 @@
----
+kind: pipeline
+name: build
+steps:
+  - name: base
+    image: inspirehep/drone-buildah:v0.1.0
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      context: backend
+      destinations:
+        - 'docker://docker.io/inspirehep/hep:${DRONE_COMMIT_SHA}'
+  - name: dev
+    image: inspirehep/drone-buildah:v0.1.0
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      context: backend
+      dockerfile: Dockerfile.dev
+      build_args:
+        - FROM_TAG=${DRONE_COMMIT_SHA}
+      destinations:
+        - 'docker://docker.io/inspirehep/hep:dev-${DRONE_COMMIT_SHA}'
 
+---
 kind: pipeline
 name: unit
 steps:
   - name: test
-    image: inspirehep/poetry
+    image: inspirehep/hep:dev-${DRONE_COMMIT_SHA}
     commands:
-      - cd backend
-      - poetry install
       - ./run-code-checks.sh
       - poetry run py.test tests/unit
+depends_on:
+  - build
 
 ---
-
 kind: pipeline
 name: integration
 steps:
   - name: test
-    image: inspirehep/poetry
+    image: inspirehep/hep:dev-${DRONE_COMMIT_SHA}
     commands:
-      - cd backend
-      - poetry install
-      - poetry run py.test -vvv tests/integration/
+      - poetry run py.test tests/integration/
     environment:
       INVENIO_ACCOUNTS_SESSION_REDIS_URL: "redis://redis:6379/2"
       INVENIO_CACHE_REDIS_URL: 'redis://redis:6379/0'
@@ -29,6 +52,8 @@ steps:
       INVENIO_CELERY_RESULT_BACKEND: 'redis://redis:6379/1'
       INVENIO_SEARCH_ELASTIC_HOSTS: "['elasticsearch:9200']"
       INVENIO_SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://inspirehep@postgres:5432/inspirehep'
+depends_on:
+  - build
 services:
 - name: postgres
   image: postgres:9.6
@@ -57,15 +82,12 @@ services:
       cpu: 1
 
 ---
-
 kind: pipeline
 name: integration-async
 steps:
   - name: test
-    image: inspirehep/poetry
+    image: inspirehep/hep:dev-${DRONE_COMMIT_SHA}
     commands:
-      - cd backend
-      - poetry install
       - poetry run py.test tests/integration-async
     environment:
       INVENIO_ACCOUNTS_SESSION_REDIS_URL: "redis://redis:6379/2"
@@ -74,6 +96,8 @@ steps:
       INVENIO_CELERY_RESULT_BACKEND: 'redis://redis:6379/1'
       INVENIO_SEARCH_ELASTIC_HOSTS: "['elasticsearch:9200']"
       INVENIO_SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://inspirehep@postgres:5432/inspirehep'
+depends_on:
+  - build
 services:
 - name: postgres
   image: postgres:9.6
@@ -101,7 +125,6 @@ services:
       cpu: 1
 
 ---
-
 kind: pipeline
 name: ui
 steps:
