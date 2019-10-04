@@ -4,7 +4,7 @@
 #
 # inspirehep is free software; you can redistribute it and/or modify it under
 # the terms of the MIT License; see LICENSE file for more details.
-FROM inspirehep/poetry:1.0.0b1
+FROM inspirehep/poetry:1.0.0a5
 
 WORKDIR /opt/inspire
 ENTRYPOINT ["inspirehep"]
