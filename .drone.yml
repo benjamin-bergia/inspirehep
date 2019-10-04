@@ -2,7 +2,7 @@ kind: pipeline
 name: build-backend
 steps:
   - name: base
-    image: inspirehep/drone-buildah:v0.1.0
+    image: inspirehep/drone-buildah:v0.2.0
     settings:
       username:
         from_secret: docker_username
@@ -12,7 +12,7 @@ steps:
       destinations:
         - 'docker://docker.io/inspirehep/hep:${DRONE_COMMIT_SHA}'
   - name: dev
-    image: inspirehep/drone-buildah:v0.1.0
+    image: inspirehep/drone-buildah:v0.2.0
     settings:
       username:
         from_secret: docker_username
@@ -129,7 +129,7 @@ kind: pipeline
 name: ui
 steps:
   - name: base
-    image: inspirehep/drone-buildah:v0.1.0
+    image: inspirehep/drone-buildah:v0.2.0
     settings:
       username:
         from_secret: docker_username
@@ -140,7 +140,7 @@ steps:
       destinations:
         - 'docker://docker.io/inspirehep/ui:${DRONE_COMMIT_SHA}'
   - name: dev
-    image: inspirehep/drone-buildah:v0.1.0
+    image: inspirehep/drone-buildah:v0.2.0
     settings:
       username:
         from_secret: docker_username
