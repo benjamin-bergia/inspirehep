@@ -1,5 +1,5 @@
 kind: pipeline
-name: build
+name: build-backend
 steps:
   - name: base
     image: inspirehep/drone-buildah:v0.1.0
@@ -35,7 +35,7 @@ steps:
       - ./run-code-checks.sh
       - poetry run py.test tests/unit
 depends_on:
-  - build
+  - build-backend
 
 ---
 kind: pipeline
@@ -53,7 +53,7 @@ steps:
       INVENIO_SEARCH_ELASTIC_HOSTS: "['elasticsearch:9200']"
       INVENIO_SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://inspirehep@postgres:5432/inspirehep'
 depends_on:
-  - build
+  - build-backend
 services:
 - name: postgres
   image: postgres:9.6
@@ -97,7 +97,7 @@ steps:
       INVENIO_SEARCH_ELASTIC_HOSTS: "['elasticsearch:9200']"
       INVENIO_SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://inspirehep@postgres:5432/inspirehep'
 depends_on:
-  - build
+  - build-backend
 services:
 - name: postgres
   image: postgres:9.6
@@ -128,19 +128,33 @@ services:
 kind: pipeline
 name: ui
 steps:
-  - name: permission
-    image: busybox
-    commands:
-      - chown -R 999 .
+  - name: base
+    image: inspirehep/drone-buildah:v0.1.0
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      context: ui
+      target: base
+      destinations:
+        - 'docker://docker.io/inspirehep/ui:${DRONE_COMMIT_SHA}'
+  - name: dev
+    image: inspirehep/drone-buildah:v0.1.0
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      context: ui
+      dockerfile: Dockerfile.dev
+      target: test
+      build_args:
+        - FROM_TAG=${DRONE_COMMIT_SHA}
+      destinations:
+        - 'docker://docker.io/inspirehep/ui:dev-${DRONE_COMMIT_SHA}'
   - name: test
-    image: alekzonder/puppeteer
-    commands:
-      - cd ui
-      - yarn
-      - yarn build
-      - cd ui-tests
-      - yarn install
-      - yarn test
+    image: inspirehep/ui:dev-${DRONE_COMMIT_SHA}
     environment:
       NODE_ENV: test
       UI_TESTS_HOST: 'localhost:8081'
