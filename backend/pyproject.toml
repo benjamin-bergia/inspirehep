@@ -50,7 +50,7 @@ orcid = "==1.0.3"
 node-semver = "<0.2.0,>=0.1.1"
 pybtex = "*"
 cryptography = "<2.6"
-flask-kvsession = {git = "https://github.com/inspirehep/flask-kvsession.git"}
+Flask-KVSession = {git = "https://github.com/inspirehep/flask-kvsession.git"}
 python-redis-lock = "^3.3"
 # FIXME: orcid tests are failing with `4.4` because of OrderedDict changes
 lxml = "~=4.3,<4.4"
